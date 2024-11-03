@@ -17,11 +17,33 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <% jobs.forEach(job => { %>
                     <!-- Each job card has a separate x-data instance -->
-                    <div class="bg-white rounded-lg shadow-lg p-6" x-data="{ showViewModal: false, showApplyModal: false }">
+                    <div class="bg-white rounded-lg shadow-lg p-6" x-data="{ 
+                        showViewModal: false, 
+                        showApplyModal: false,
+                        applyForm: {
+                            jobId: '<%= job.id %>',
+                            jobExperience: '',
+                            willingToRelocate: 'yes',
+                            currentCTC: '',
+                            startDate: ''
+                        },
+                        applyForJob() {
+                            fetch('/jobs/apply', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(this.applyForm)
+                            })
+                            .then(response => response.json())
+                            .then(data => alert(data.message))
+                            .catch(error => console.error('Error:', error));
+                        }
+                    }">
                         <h2 class="text-xl font-semibold mb-2"><%= job.title || 'Job Title Not Available' %></h2>
-                        <p class="text-gray-700"><strong>Company:</strong> <%= job.company_name || 'Company Name Not Available' %></p>
+                        <p class="text-gray-700"><strong>Company:</strong> <%= job.company || 'Company Name Not Available' %></p>
                         <p class="text-gray-700"><strong>Location:</strong> <%= job.location || 'Location Not Available' %></p>
-                        <p class="text-gray-700"><strong>Type:</strong> <%= job.job_type || 'Job Type Not Available' %></p>
+                        
 
                         <div class="flex justify-between mt-4">
                             <!-- View Job Button -->
@@ -34,12 +56,13 @@
                         <div x-show="showViewModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center" style="display: none;">
                             <div class="bg-white rounded-lg p-6 max-w-lg w-full shadow-lg">
                                 <h3 class="text-2xl font-bold mb-4"><%= job.title || 'Job Title Not Available' %></h3>
-                                <p class="text-gray-700"><strong>Company:</strong> <%= job.company_name || 'Company Name Not Available' %></p>
+                                <p class="text-gray-700"><strong>Company:</strong> <%= job.company || 'Company Name Not Available' %></p>
                                 <p class="text-gray-700"><strong>Location:</strong> <%= job.location || 'Location Not Available' %></p>
                                 <p class="mt-4"><%= job.description || 'Description not available.' %></p>
                                 <button @click="showViewModal = false" class="mt-4 bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600">Close</button>
                             </div>
                         </div>
+                        
 
                         <!-- Apply Job Modal -->
                         <div x-show="showApplyModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center" style="display: none;">
@@ -47,26 +70,25 @@
                                 <h3 class="text-2xl font-bold mb-4">Apply for <%= job.title || 'Job Title' %></h3>
                                 
                                 <!-- Application Form -->
-                                <form id="applyForm" @submit.prevent="applyForJob">
-                                    <input type="hidden" name="jobId" :value="job.id">
+                                <form @submit.prevent="applyForJob">
                                     <div class="mb-4">
                                         <label class="block text-gray-700">Job Experience (Years)</label>
-                                        <input type="number" min="0" name="jobExperience" class="w-full border border-gray-300 p-2 rounded" placeholder="Your experience in years" required>
+                                        <input type="number" min="0" x-model="applyForm.jobExperience" class="w-full border border-gray-300 p-2 rounded" placeholder="Your experience in years" required>
                                     </div>
                                     <div class="mb-4">
                                         <label class="block text-gray-700">Willing to Relocate?</label>
-                                        <select name="willingToRelocate" class="w-full border border-gray-300 p-2 rounded" required>
+                                        <select x-model="applyForm.willingToRelocate" class="w-full border border-gray-300 p-2 rounded" required>
                                             <option value="yes">Yes</option>
                                             <option value="no">No</option>
                                         </select>
                                     </div>
                                     <div class="mb-4">
                                         <label class="block text-gray-700">Current CTC</label>
-                                        <input type="text" name="currentCTC" class="w-full border border-gray-300 p-2 rounded" placeholder="Current CTC (Annual)" required>
+                                        <input type="text" x-model="applyForm.currentCTC" class="w-full border border-gray-300 p-2 rounded" placeholder="Current CTC (Annual)" required>
                                     </div>
                                     <div class="mb-4">
                                         <label class="block text-gray-700">Preferred Start Date</label>
-                                        <input type="date" name="startDate" class="w-full border border-gray-300 p-2 rounded" required>
+                                        <input type="date" x-model="applyForm.startDate" class="w-full border border-gray-300 p-2 rounded" required>
                                     </div>
                                     <div class="flex justify-between mt-4">
                                         <button type="submit" class="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600">Submit Application</button>
@@ -82,28 +104,5 @@
             <p>No jobs found.</p>
         <% } %>
     </div>
-    <script>
-        async function applyForJob(event) {
-            event.preventDefault();
-    
-            const form = document.getElementById('applyForm');
-            const formData = new FormData(form);
-    
-            const response = await fetch('/jobs/apply', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(Object.fromEntries(formData.entries()))
-            });
-    
-            const result = await response.json();
-            if (response.ok) {
-                alert(result.message);
-                form.reset();
-                showApplyModal = false;
-            } else {
-                alert('Error submitting application');
-            }
-        }
-    </script>
 </body>
 </html>

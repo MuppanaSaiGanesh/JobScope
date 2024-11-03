@@ -1,3 +1,4 @@
+// models/User.js
 const db = require('../config/db');
 
 const user = {
