@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+</head>
+<body class="bg-gray-100">
+    <!-- Smaller, centered container for the dashboard -->
+    <h1 class="text-2xl font-bold text-center mb-6">Dashboard</h1>
+    <div class=" flex justify-between mx-auto p-6 bg-white shadow-lg rounded-lg mt-10">
+        
+
+        <!-- Donut Chart for Job Statistics -->
+        <div class="flex items-center justify-center mb-6">
+            <div>
+                <canvas id="applicationsDonutChart"></canvas>
+            </div>
+        </div>
+
+        <script>
+            // Fetch stats data passed from the server
+            const stats = <%- JSON.stringify(stats) %>;
+
+            // Chart.js configuration
+            const ctx = document.getElementById('applicationsDonutChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Total Jobs', 'Jobs Viewed', 'Jobs Applied'],
+                    datasets: [{
+                        label: 'Job Stats',
+                        data: [stats.totalJobs, stats.totalViews, stats.totalApplications],
+                        backgroundColor: ['#4CAF50', '#FFC107', '#2196F3'],
+                        hoverBackgroundColor: ['#66BB6A', '#FFD54F', '#42A5F5']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (tooltipItem) => {
+                                    return `${tooltipItem.label}: ${tooltipItem.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
+        <!-- Search Form for Job by Skill -->
+        <form action="/jobs/search" method="GET" class="mb-8 px-8 border-black border-2 rounded-md" >
+            <h1 class="text-center texl-2xl mb-6 font-bold">Search Related Jobs</h1>
+            <label for="skill" class="block text-gray-700 text-sm font-semibold mb-2">Search Jobs by Skill:</label>
+            <div class="flex items-center">
+                <input type="text" name="skill" id="skill" placeholder="e.g., Java" 
+                       class="w-full px-4 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                       required>
+                <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600">
+                    Search
+                </button>
+            </div>
+        </form>
+
+        
+    </div>
+</body>
+</html>

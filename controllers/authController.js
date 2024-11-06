@@ -1,4 +1,3 @@
-// controllers/authController.js
 const User = require('../models/User'); // Ensure this is correctly importing your User model
 const bcrypt = require('bcryptjs');
 const passport = require('passport');
@@ -9,7 +8,7 @@ exports.register = (req, res) => {
 };
 
 exports.registerUser = (req, res) => {
-    const { username, password, email, skills, location } = req.body;
+    const { username, password, email, skills, location, role = 'user' } = req.body; // Default to 'user' role
 
     // Hash the password
     bcrypt.hash(password, 10, (err, hash) => {
@@ -19,7 +18,7 @@ exports.registerUser = (req, res) => {
         }
 
         // Create a new user object
-        const newUser = { username, password: hash, email, skills, location };
+        const newUser = { username, password: hash, email, skills, location, role };
         User.create(newUser, (err) => {
             if (err) {
                 console.error('Error creating user:', err);
@@ -44,7 +43,7 @@ exports.loginUser = (req, res, next) => {
         }
         req.logIn(user, (err) => {
             if (err) return next(err); // Handle login error
-            return res.redirect('/jobs'); // Redirect to job listings after successful login
+            return res.redirect(user.role === 'admin' ? '/admin/dashboard' : '/jobs'); // Redirect to admin dashboard if admin
         });
     })(req, res, next);
 };

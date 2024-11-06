@@ -5,21 +5,21 @@ const authMiddleware = (req, res, next) => {
     if (req.isAuthenticated()) {
         User.findById(req.user.id, (err, user) => {
             if (err) return next(err);
-            req.user = user; // Attach user to request
+            req.user = user; // Attach user data to request object
             next();
         });
     } else {
-        req.user = null; // Set user to null if not authenticated
+        req.user = null; // If not authenticated, set req.user to null
         next();
     }
 };
 
-// Middleware to restrict access to authenticated users only
+// Ensure route is accessible only to authenticated users
 authMiddleware.isAuthenticated = (req, res, next) => {
     if (req.isAuthenticated()) {
         return next();
     }
-    res.redirect('/auth/login'); // Redirect non-authenticated users to login
+    res.redirect('/auth/login'); // Redirect unauthenticated users to login
 };
 
 module.exports = authMiddleware;

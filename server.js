@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
@@ -30,7 +29,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Use the auth middleware to set req.user
+// Ensure req.user is set if authenticated
 app.use(authMiddleware);
 
 // Import routes
@@ -40,12 +39,12 @@ const adminRoutes = require('./routes/adminRoutes');
 
 // Use routes
 app.use('/auth', authRoutes);
-app.use('/jobs', jobRoutes); // Updated to use the '/jobs/apply' path within jobRoutes.js
-app.use('/admin', adminRoutes);
+app.use('/jobs', jobRoutes); // Mounts job-related routes
+app.use('/admin', adminRoutes); // Admin routes
 
 // Render the login page for the root route
 app.get('/', (req, res) => {
-    res.redirect('/auth/register');
+    res.redirect('/auth/login');
 });
 
 const PORT = process.env.PORT || 5000;
