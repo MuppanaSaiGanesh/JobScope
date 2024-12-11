@@ -23,12 +23,14 @@
                 </thead>
                 <tbody>
                     <% users.forEach(function(user) { %>
+                        <% if (user.role !== 'admin') { %> <!-- Only show users, not admins -->
                         <tr class="border-b">
                             <td class="px-4 py-2"><%= user.id %></td>
-                            <td class="px-4 py-2"><%= user.username %></td>
+                            <td class="px-4 py-2"><a href="/jobs/dashboard/<%= user.id %>" class="text-blue-600 hover:underline"><%= user.username %></a></td>
                             <td class="px-4 py-2"><%= user.email %></td>
                             <td class="px-4 py-2"><%= user.role %></td>
                         </tr>
+                        <% } %>
                     <% }); %>
                 </tbody>
             </table>

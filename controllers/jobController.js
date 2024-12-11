@@ -1,4 +1,3 @@
-//controllers/jobController.js
 const https = require('https');
 const db = require('../config/db');
 
@@ -25,11 +24,27 @@ exports.getJobs = (req, res) => {
         response.on('end', () => {
             const jobs = JSON.parse(data).jobs || [];
 
+            // Log job data for debugging purposes
+            console.log('Fetched jobs:', jobs);
+
             // Store jobs in the database
             jobs.forEach((job) => {
-                const apiJobId = job.id;
-                const sqlCheck = 'SELECT id FROM jobs WHERE api_job_id = ?';
+                const apiJobId = job.id ? String(job.id) : null; // Ensure apiJobId is a string
 
+                // If API Job ID is not valid, skip inserting this job
+                if (!apiJobId) {
+                    console.error('Invalid Job ID:', job);
+                    return;
+                }
+
+                const title = job.title || 'Unknown Title'; // Default value for missing title
+                const location = job.location || 'Unknown Location';
+                const company = job.company || 'Unknown Company';
+                const description = job.description || 'No description available';
+                const url = job.url || '#';
+
+                // Check if job already exists in the database
+                const sqlCheck = 'SELECT id FROM jobs WHERE api_job_id = ?';
                 db.query(sqlCheck, [apiJobId], (err, results) => {
                     if (err) {
                         console.error('Error checking job existence:', err);
@@ -43,11 +58,11 @@ exports.getJobs = (req, res) => {
                         `;
                         db.query(sqlInsert, [
                             apiJobId,
-                            job.title,
-                            job.location,
-                            job.company,
-                            job.description,
-                            job.url
+                            title,
+                            location,
+                            company,
+                            description,
+                            url
                         ], (err) => {
                             if (err) {
                                 console.error('Error inserting job into the database:', err);
@@ -85,10 +100,12 @@ exports.applyForJob = (req, res) => {
     const { jobId: apiJobId, jobExperience, willingToRelocate, currentCTC, startDate } = req.body;
     const user = req.user;
 
+    // Validate the incoming data
     if (!apiJobId) {
         return res.status(400).json({ error: "Invalid Job ID." });
     }
 
+    // Query to retrieve the job by API job ID
     db.query('SELECT id FROM jobs WHERE api_job_id = ?', [apiJobId], (err, results) => {
         if (err) {
             console.error('Error retrieving job:', err);
@@ -151,32 +168,30 @@ exports.trackJobView = (req, res) => {
     });
 };
 
-// In jobController.js
-exports.getDashboardStats = (req, res) => {
-    const userId = req.user.id;
+exports.getDashboardStats = (userId) => {
+    return new Promise((resolve, reject) => {
+        const sqlTotalJobs = 'SELECT COUNT(*) AS totalJobs FROM jobs';
+        const sqlJobViews = 'SELECT COUNT(*) AS totalViews FROM job_views WHERE user_id = ?';
+        const sqlJobApplications = 'SELECT COUNT(*) AS totalApplications FROM job_applications WHERE user_id = ?';
 
-    const sqlTotalJobs = 'SELECT COUNT(*) AS totalJobs FROM jobs';
-    const sqlJobViews = 'SELECT COUNT(*) AS totalViews FROM job_views WHERE user_id = ?';
-    const sqlJobApplications = 'SELECT COUNT(*) AS totalApplications FROM job_applications WHERE user_id = ?';
+        db.query(sqlTotalJobs, (err, totalJobsResult) => {
+            if (err) return reject('Failed to fetch total jobs');
+            
+            db.query(sqlJobViews, [userId], (err, viewsResult) => {
+                if (err) return reject('Failed to fetch job views');
 
-    db.query(sqlTotalJobs, (err, totalJobsResult) => {
-        if (err) return res.status(500).json({ error: 'Failed to fetch total jobs' });
-        
-        db.query(sqlJobViews, [userId], (err, viewsResult) => {
-            if (err) return res.status(500).json({ error: 'Failed to fetch job views' });
+                db.query(sqlJobApplications, [userId], (err, applicationsResult) => {
+                    if (err) return reject('Failed to fetch job applications');
 
-            db.query(sqlJobApplications, [userId], (err, applicationsResult) => {
-                if (err) return res.status(500).json({ error: 'Failed to fetch job applications' });
+                    const stats = {
+                        totalJobs: totalJobsResult[0].totalJobs,
+                        totalViews: viewsResult[0].totalViews,
+                        totalApplications: applicationsResult[0].totalApplications,
+                    };
 
-                const stats = {
-                    totalJobs: totalJobsResult[0].totalJobs,
-                    totalViews: viewsResult[0].totalViews,
-                    totalApplications: applicationsResult[0].totalApplications,
-                };
-
-                res.render('dashboard', { user: req.user, stats });
+                    resolve(stats);
+                });
             });
         });
     });
 };
-
